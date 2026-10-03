@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organizer {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  name            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  events          Event[]
+  checkInLogs     CheckInLog[]
+}
+
+model Event {
+  id            String       @id @default(uuid())
+  organizerId    String
+  organizer     Organizer    @relation(fields: [organizerId], references: [id])
+  name          String
+  description   String
+  venue         String
+  startTime     DateTime
+  endTime       DateTime
+  capacity      Int
+  bannerUrl     String?
+  status        String       @default("ACTIVE")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  registrations Registration[]
+  tickets       Ticket[]
+
+  @@index([organizerId])
+}
+
+model Registration {
+  id          String         @id @default(uuid())
+  eventId     String
+  event       Event          @relation(fields: [eventId], references: [id])
+  fullName    String
+  email       String
+  studentId   String
+  phone       String?
+  createdAt   DateTime       @default(now())
+  ticket      Ticket?
+  emailDeliveries EmailDelivery[]
+
+  @@unique([studentId, eventId])
+  @@unique([email, eventId])
+  @@index([eventId])
+}
+
+model Ticket {
+  id            String       @id @default(uuid())
+  registrationId String      @unique
+  registration  Registration @relation(fields: [registrationId], references: [id])
+  eventId       String
+  event         Event        @relation(fields: [eventId], references: [id])
+  tokenHash     String       @unique
+  status        String       @default("VALID")
+  issuedAt      DateTime     @default(now())
+  expiresAt     DateTime
+  checkedInAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  checkInLogs   CheckInLog[]
+
+  @@index([eventId])
+  @@index([status])
+}
+
+model EmailDelivery {
+  id            String       @id @default(uuid())
+  registrationId String
+  registration  Registration @relation(fields: [registrationId], references: [id])
+  recipient     String
+  provider      String?      @default("SMTP")
+  status        String       @default("PENDING")
+  attempts      Int          @default(0)
+  lastAttemptAt DateTime?
+  errorMessage  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model CheckInLog {
+  id          String   @id @default(uuid())
+  ticketId    String
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+  eventId     String
+  organizerId String?
+  organizer   Organizer? @relation(fields: [organizerId], references: [id])
+  result      String
+  scannedAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+}

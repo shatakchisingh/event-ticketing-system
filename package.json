@@ -1,0 +1,20 @@
+{
+  "name": "event-ticketing-system",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace @event-ticketing/server\" \"npm run dev --workspace @event-ticketing/web\"",
+    "build": "npm run build --workspace @event-ticketing/server && npm run build --workspace @event-ticketing/web",
+    "db:generate": "npm run db:generate --workspace @event-ticketing/server",
+    "db:migrate": "npm run db:migrate --workspace @event-ticketing/server",
+    "db:seed": "npm run db:seed --workspace @event-ticketing/server",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
